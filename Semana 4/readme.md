@@ -57,7 +57,20 @@ Con Matmul_tiled_openmp
 ![cpu-Matmul](Figure_4.png)
 
 Los resultados muestran un escalado que rinde bien hasta los 4 hilos, pero que se estanca rápidamente a partir de 5 hilos debido a que la mejora se vuelve marginal, llegando incluso a una ligera regresión en el hilo 7. Teóricamente, esto se relaciona con la Ley de Amdahl y los límites asintóticos del paralelismo, donde el programa choca con la porción secuencial y sufre por la saturación de recursos compartidos o la pérdida de eficiencia al superar el codo de la gráfica de escalamiento.
+
 Por el contrario, la implementación con tiling mantiene un comportamiento excelente con un escalado casi lineal y eficiencias superiores al 95% hasta los 7 hilos. Esto demuestra que la técnica explota adecuadamente la localidad de memoria en los niveles de caché y reduce los costos de comunicación, cumpliendo con la consideración de mantener una alta eficiencia operativa antes de llegar al punto donde la contención de ancho de banda de memoria provoca una caída notable en el octavo hilo.
+
+# Practica de clase 4
+## Ejercicio A y B
+| Característica | Biblioteca Estática (`bench-static`) | Biblioteca Dinámica (`bench-dynamic`) |
+| :--- | :--- | :--- |
+| **Tiempo Total** | 1,524,138.038 $\mu s$ | 5,957,752.407 $\mu s$ |
+| **Tiempo de Relleno (A / B)** | $\approx 516$ ms y $520$ ms por iteración total | $\approx 1,985$ ms y $1,975$ ms por iteración total |
+| **Tiempo de Suma (`add`)** | 487,797.667 $\mu s$ | 1,996,148.388 $\mu s$ |
+| **Enlace y Resolución** | El código se copia directamente en el binario en tiempo de compilación. | Resuelve símbolos en tiempo de ejecución, introduciendo indirección. |
+| **Rendimiento** | Muy superior al evitar sobrecargas en llamadas repetitivas dentro de bucles. | Inferior debido a la sobrecarga por indirección en la ejecución de funciones externas. |
+
+La versión estática le gana por mucho a la dinámica porque mete el código directo en el ejecutable al compilar, quitándose de encima esa molesta indirección y resolución de símbolos en tiempo de ejecución que frena tanto a la dinámica. Aunque la dinámica es útil para compartir espacio en disco y memoria, en bucles pesados con miles de iteraciones esa sobrecarga extra se nota altísimo, haciendo que la estática sea la opción ganadora en rendimiento puro
 
 ## Historial Consola
 ```bash
@@ -375,7 +388,34 @@ Thread 1: finalizado
 Thread 6: finalizado
 Thread 7: finalizado
 
+
+roussel@desk:~/Desktop/practica-clase-sem4$ ./libraries/build/bin/bench-static 1000000 1000 1.0 2.0
+Library version
+Elements: 1000000
+Iterations: 1000
+A offset: 1.000000
+B offset: 2.000000
+
+Profile:
+  fill A: 516163.954 microseconds total, 516.164 per iteration
+  fill B: 520175.757 microseconds total, 520.176 per iteration
+  add:    487797.667 microseconds total, 487.798 per iteration
+  total:  1524138.038 microseconds
+
 real    0m3.952s
 user    0m22.993s
 sys     0m0.890s
 roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ 
+
+roussel@desk:~/Desktop/practica-clase-sem4$ ./libraries/build/bin/bench-dynamic 1000000 1000 1.0 2.0
+Library version
+Elements: 1000000
+Iterations: 1000
+A offset: 1.000000
+B offset: 2.000000
+
+Profile:
+  fill A: 1985638.363 microseconds total, 1985.638 per iteration
+  fill B: 1975965.226 microseconds total, 1975.965 per iteration
+  add:    1996148.388 microseconds total, 1996.148 per iteration
+  total:  5957752.407 microseconds
