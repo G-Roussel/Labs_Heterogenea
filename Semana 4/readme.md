@@ -1,3 +1,5 @@
+# Practica 3
+## Ejercicio A
 | Núcleos activos | Tiempo real (s) | Speedup S=T1/Tn | Eficiencia E=S/N | Estim. fracción paralela (Amdahl) |
 |:---:|---:|---:|---:|---:|
 | 1 | 23.661 | 1.000 | 1.00 | — |
@@ -11,6 +13,53 @@
 
 ![cpu-affinity](Images/Figure_1.png)
 
+| Núcleos activos | Tiempo real (s) | Speedup S=T1/Tn | Eficiencia E=S/N | Estim. fracción paralela (Amdahl) |
+|:---:|---:|---:|---:|---:|
+| 1 | 2.967 | 1.000 | 1.00 | — |
+| 2 | 3.092 | 0.960 | 0.480 | N/A (S < 1) |
+| 3 | 3.237 | 0.917 | 0.306 | N/A (S < 1) |
+| 4 | 3.376 | 0.879 | 0.220 | N/A (S < 1) |
+| 5 | 3.519 | 0.843 | 0.169 | N/A (S < 1) |
+| 6 | 3.664 | 0.810 | 0.135 | N/A (S < 1) |
+| 7 | 3.811 | 0.779 | 0.111 | N/A (S < 1) |
+| 8 | 3.952 | 0.751 | 0.094 | N/A (S < 1) |
+
+![cpu-native](Images/Figure_2.png)
+
+Probando el modo native se nota que el kernel manda los hilos por todos lados. Al principio suena bien porque se balancea solo cuando hay varias tareas, pero al final termina haciendo un montón de cambios de contexto y la caché sufre horrible. Por eso las latencias varían un montón y cuando la carga se pone intensa el rendimiento se cae. En plan, te da flexibilidad, pero pierdes consistencia y eficiencia.
+
+Por el contrario, con cpu affinity la cosa cambia un montón. Al amarrar cada hilo a su núcleo fijo, evitas que anden migrando, las cachés L1/L2 se aprovechan al 100% y el rendimiento se vuelve superestable y rápido. Lo único malo es que si hay picos raros de carga ya no se adapta tan fácil y puedes terminar subutilizando cores si no lo configuras bien.
+
+## Ejercicio B
+Con Softmax_openmp
+| Threads | Tiempo (s) | Speedup | Observación |
+|:---:|---:|---:|---|
+| 1 | 0.783482 | 1.00 | Línea base |
+| 2 | 0.604985 | 1.29 | Mejora notable respecto a 1 hilo |
+| 3 | 0.499171 | 1.57 | Ganancia adicional significativa |
+| 4 | 0.443553 | 1.77 | Buen escalado hasta 4 hilos |
+| 5 | 0.411306 | 1.90 | Rendimiento sigue subiendo pero menos |
+| 6 | 0.407617 | 1.92 | Casi meseta; ganancias marginales |
+| 7 | 0.411595 | 1.90 | Ligera regresión respecto a 6 hilos |
+
+![cpu-native](Images/Figure_3.png)
+Con Matmul_tiled_openmp
+| Threads | Tiempo (s) | Speedup | Eficiencia (%) | Observación |
+|:---:|---:|---:|---:|---|
+| 1 | 0.495351 | 1.00 | 100.0% | Línea base |
+| 2 | 0.248549 | 1.99 | 99.5% | Casi escalado perfecto |
+| 3 | 0.167513 | 2.96 | 98.7% | Muy buena eficiencia |
+| 4 | 0.125619 | 3.95 | 98.8% | Escalado casi lineal |
+| 5 | 0.101883 | 4.86 | 97.2% | Pequeña pérdida de eficiencia |
+| 6 | 0.084904 | 5.84 | 97.3% | Rendimiento sigue mejorando |
+| 7 | 0.073721 | 6.72 | 96.0% | Alta eficiencia sostenida |
+| 8 | 0.071609 | 6.92 | 86.5% | Ganancia marginal; eficiencia cae |
+![cpu-native](Images/Figure_4.png)
+
+Los resultados muestran un escalado que rinde bien hasta los 4 hilos, pero que se estanca rápidamente a partir de 5 hilos debido a que la mejora se vuelve marginal, llegando incluso a una ligera regresión en el hilo 7. Teóricamente, esto se relaciona con la Ley de Amdahl y los límites asintóticos del paralelismo, donde el programa choca con la porción secuencial y sufre por la saturación de recursos compartidos o la pérdida de eficiencia al superar el codo de la gráfica de escalamiento.
+Por el contrario, la implementación con tiling mantiene un comportamiento excelente con un escalado casi lineal y eficiencias superiores al 95% hasta los 7 hilos. Esto demuestra que la técnica explota adecuadamente la localidad de memoria en los niveles de caché y reduce los costos de comunicación, cumpliendo con la consideración de mantener una alta eficiencia operativa antes de llegar al punto donde la contención de ancho de banda de memoria provoca una caída notable en el octavo hilo.
+
+## Historial Consola
 ```bash
 roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ make
 gcc -Wall -Wextra -O3 cpu-naive.c -o cpu-naive -pthread
@@ -207,3 +256,126 @@ Thread 0: finalizado en CPU 0
 real    0m3.165s
 user    0m23.080s
 sys     0m1.117s
+
+
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 1
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 0: finalizado
+
+real    0m2.967s
+user    0m2.839s
+sys     0m0.128s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 2
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 0: finalizado
+Thread 1: finalizado
+
+real    0m3.092s
+user    0m5.690s
+sys     0m0.216s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 3
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 0: finalizado
+Thread 1: finalizado
+Thread 2: finalizado
+
+real    0m3.237s
+user    0m8.547s
+sys     0m0.330s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 4
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 3: 256.00 MB asignados
+Thread 1: finalizado
+Thread 3: finalizado
+Thread 0: finalizado
+Thread 2: finalizado
+
+real    0m3.376s
+user    0m11.386s
+sys     0m0.462s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 5
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 3: 256.00 MB asignados
+Thread 4: 256.00 MB asignados
+Thread 1: finalizado
+Thread 2: finalizado
+Thread 3: finalizado
+Thread 0: finalizado
+Thread 4: finalizado
+
+real    0m3.519s
+user    0m14.281s
+sys     0m0.566s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 6
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 3: 256.00 MB asignados
+Thread 4: 256.00 MB asignados
+Thread 5: 256.00 MB asignados
+Thread 1: finalizado
+Thread 2: finalizado
+Thread 3: finalizado
+Thread 5: finalizado
+Thread 4: finalizado
+Thread 0: finalizado
+
+real    0m3.664s
+user    0m17.180s
+sys     0m0.676s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 7
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 3: 256.00 MB asignados
+Thread 4: 256.00 MB asignados
+Thread 5: 256.00 MB asignados
+Thread 6: 256.00 MB asignados
+Thread 3: finalizado
+Thread 0: finalizado
+Thread 6: finalizado
+Thread 5: finalizado
+Thread 4: finalizado
+Thread 1: finalizado
+Thread 2: finalizado
+
+real    0m3.811s
+user    0m20.096s
+sys     0m0.779s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ time ./cpu-naive 8
+CPUs logicos disponibles: 16
+Thread 0: 256.00 MB asignados
+Thread 1: 256.00 MB asignados
+Thread 2: 256.00 MB asignados
+Thread 3: 256.00 MB asignados
+Thread 4: 256.00 MB asignados
+Thread 5: 256.00 MB asignados
+Thread 6: 256.00 MB asignados
+Thread 7: 256.00 MB asignados
+Thread 4: finalizado
+Thread 0: finalizado
+Thread 2: finalizado
+Thread 5: finalizado
+Thread 3: finalizado
+Thread 1: finalizado
+Thread 6: finalizado
+Thread 7: finalizado
+
+real    0m3.952s
+user    0m22.993s
+sys     0m0.890s
+roussel@desk:~/Desktop/practica-clase-sem4/semana 3/threading$ 
