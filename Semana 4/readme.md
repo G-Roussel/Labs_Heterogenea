@@ -11,7 +11,7 @@
 | 7 | 5.975 | 3.959 | 0.566 | 0.87 |
 | 8 | 3.165 | 7.479 | 0.935 | 0.99 |
 
-![cpu-affinity](Images/Figure_1.png)
+![cpu-affinity](Figure_1.png)
 
 | Núcleos activos | Tiempo real (s) | Speedup S=T1/Tn | Eficiencia E=S/N | Estim. fracción paralela (Amdahl) |
 |:---:|---:|---:|---:|---:|
@@ -24,7 +24,7 @@
 | 7 | 3.811 | 0.779 | 0.111 | N/A (S < 1) |
 | 8 | 3.952 | 0.751 | 0.094 | N/A (S < 1) |
 
-![cpu-native](Images/Figure_2.png)
+![cpu-native](Figure_2.png)
 
 Probando el modo native se nota que el kernel manda los hilos por todos lados. Al principio suena bien porque se balancea solo cuando hay varias tareas, pero al final termina haciendo un montón de cambios de contexto y la caché sufre horrible. Por eso las latencias varían un montón y cuando la carga se pone intensa el rendimiento se cae. En plan, te da flexibilidad, pero pierdes consistencia y eficiencia.
 
@@ -42,7 +42,7 @@ Con Softmax_openmp
 | 6 | 0.407617 | 1.92 | Casi meseta; ganancias marginales |
 | 7 | 0.411595 | 1.90 | Ligera regresión respecto a 6 hilos |
 
-![cpu-Softmax](Images/Figure_3.png)
+![cpu-Softmax](Figure_3.png)
 Con Matmul_tiled_openmp
 | Threads | Tiempo (s) | Speedup | Eficiencia (%) | Observación |
 |:---:|---:|---:|---:|---|
@@ -54,7 +54,7 @@ Con Matmul_tiled_openmp
 | 6 | 0.084904 | 5.84 | 97.3% | Rendimiento sigue mejorando |
 | 7 | 0.073721 | 6.72 | 96.0% | Alta eficiencia sostenida |
 | 8 | 0.071609 | 6.92 | 86.5% | Ganancia marginal; eficiencia cae |
-![cpu-Matmul](Images/Figure_4.png)
+![cpu-Matmul](Figure_4.png)
 
 Los resultados muestran un escalado que rinde bien hasta los 4 hilos, pero que se estanca rápidamente a partir de 5 hilos debido a que la mejora se vuelve marginal, llegando incluso a una ligera regresión en el hilo 7. Teóricamente, esto se relaciona con la Ley de Amdahl y los límites asintóticos del paralelismo, donde el programa choca con la porción secuencial y sufre por la saturación de recursos compartidos o la pérdida de eficiencia al superar el codo de la gráfica de escalamiento.
 Por el contrario, la implementación con tiling mantiene un comportamiento excelente con un escalado casi lineal y eficiencias superiores al 95% hasta los 7 hilos. Esto demuestra que la técnica explota adecuadamente la localidad de memoria en los niveles de caché y reduce los costos de comunicación, cumpliendo con la consideración de mantener una alta eficiencia operativa antes de llegar al punto donde la contención de ancho de banda de memoria provoca una caída notable en el octavo hilo.
