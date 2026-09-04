@@ -42,7 +42,7 @@ Con Softmax_openmp
 | 6 | 0.407617 | 1.92 | Casi meseta; ganancias marginales |
 | 7 | 0.411595 | 1.90 | Ligera regresión respecto a 6 hilos |
 
-![cpu-native](Images/Figure_3.png)
+![cpu-Softmax](Images/Figure_3.png)
 Con Matmul_tiled_openmp
 | Threads | Tiempo (s) | Speedup | Eficiencia (%) | Observación |
 |:---:|---:|---:|---:|---|
@@ -54,7 +54,7 @@ Con Matmul_tiled_openmp
 | 6 | 0.084904 | 5.84 | 97.3% | Rendimiento sigue mejorando |
 | 7 | 0.073721 | 6.72 | 96.0% | Alta eficiencia sostenida |
 | 8 | 0.071609 | 6.92 | 86.5% | Ganancia marginal; eficiencia cae |
-![cpu-native](Images/Figure_4.png)
+![cpu-Matmul](Images/Figure_4.png)
 
 Los resultados muestran un escalado que rinde bien hasta los 4 hilos, pero que se estanca rápidamente a partir de 5 hilos debido a que la mejora se vuelve marginal, llegando incluso a una ligera regresión en el hilo 7. Teóricamente, esto se relaciona con la Ley de Amdahl y los límites asintóticos del paralelismo, donde el programa choca con la porción secuencial y sufre por la saturación de recursos compartidos o la pérdida de eficiencia al superar el codo de la gráfica de escalamiento.
 Por el contrario, la implementación con tiling mantiene un comportamiento excelente con un escalado casi lineal y eficiencias superiores al 95% hasta los 7 hilos. Esto demuestra que la técnica explota adecuadamente la localidad de memoria en los niveles de caché y reduce los costos de comunicación, cumpliendo con la consideración de mantener una alta eficiencia operativa antes de llegar al punto donde la contención de ancho de banda de memoria provoca una caída notable en el octavo hilo.
