@@ -26,9 +26,9 @@
 
 ![cpu-native](Figure_2.png)
 
-Probando el modo native se nota que el kernel manda los hilos por todos lados. Al principio suena bien porque se balancea solo cuando hay varias tareas, pero al final termina haciendo un montón de cambios de contexto y la caché sufre horrible. Por eso las latencias varían un montón y cuando la carga se pone intensa el rendimiento se cae. En plan, te da flexibilidad, pero pierdes consistencia y eficiencia.
+Probando el modo native se nota que el kernel manda los hilos por todos lados. Al principio suena bien porque se balancea solo cuando hay varias tareas, pero al final termina haciendo un montón de cambios de contexto y la caché sufre. Por eso las latencias varían un montón y cuando la carga se pone intensa el rendimiento se cae.
 
-Por el contrario, con cpu affinity la cosa cambia un montón. Al amarrar cada hilo a su núcleo fijo, evitas que anden migrando, las cachés L1/L2 se aprovechan al 100% y el rendimiento se vuelve superestable y rápido. Lo único malo es que si hay picos raros de carga ya no se adapta tan fácil y puedes terminar subutilizando cores si no lo configuras bien.
+Por el contrario, con cpu affinity la cosa cambia un montón. Al amarrar cada hilo a su núcleo fijo, evitas que anden migrando, las cachés L1/L2 se aprovechan al 100% y el rendimiento se vuelve superestable y rápido. Lo único malo es que si hay picos raros de carga ya no se adapta tan fácil y termina subutilizando cores si no lo configuras bien.
 
 ## Ejercicio B
 Con Softmax_openmp
