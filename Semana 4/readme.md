@@ -1,4 +1,7 @@
 # Practica 3
+﻿Característica:
+Procesador,AMD Ryzen 7 5700X 8-Core Processor
+Arquitectura,x86_64
 ## Ejercicio A
 | Núcleos activos | Tiempo real (s) | Speedup S=T1/Tn | Eficiencia E=S/N | Estim. fracción paralela (Amdahl) |
 |:---:|---:|---:|---:|---:|
